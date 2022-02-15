@@ -57,3 +57,4 @@ export * from './operators/whenValueChanged';
 export * from './operators/whereReasonsAre';
 export * from './operators/whereReasonsAreNot';
 export * from './operators/xor';
+export * from './operators/switchAll';
