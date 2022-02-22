@@ -6,7 +6,7 @@ import { IChangeSet } from './IChangeSet';
 import { ObservableCache } from './ObservableCache';
 import { EqualityComparer } from '../util/isEqualityComparer';
 import { ArrayOrIterable } from '../util/ArrayOrIterable';
-import { ConnectOptions } from '..';
+import { ConnectConfig } from '..';
 
 /**
  * An observable cache which exposes an update API.  Used at the root
@@ -36,7 +36,7 @@ export class SourceCache<TObject, TKey> implements ISourceCache<TObject, TKey> {
         return this._innerCache.watch(key);
     }
 
-    connect(options?: ConnectOptions<TObject>): Observable<IChangeSet<TObject, TKey>> {
+    connect(options?: ConnectConfig<TObject>): Observable<IChangeSet<TObject, TKey>> {
         return this._innerCache.connect(options);
     }
 
@@ -98,8 +98,8 @@ class SimpleSourceCache<TObject, TKey> implements ISourceCache<TObject, TKey>, I
         return this._sourceCache.watch(key);
     }
 
-    connect(options?: ConnectOptions<TObject>): Observable<IChangeSet<TObject, TKey>> {
-        return this._sourceCache.connect(options);
+    connect(config?: ConnectConfig<TObject>): Observable<IChangeSet<TObject, TKey>> {
+        return this._sourceCache.connect(config);
     }
 
     preview(predicate?: ((object: TObject) => boolean) | undefined): Observable<IChangeSet<TObject, TKey>> {

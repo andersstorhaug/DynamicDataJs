@@ -6,7 +6,7 @@ import { ISourceUpdater } from '../../src/cache/ISourceUpdater';
 import { SourceCache, updateable } from '../../src/cache/SourceCache';
 import { Person } from '../domain/Person';
 import { asAggregator, ChangeSetAggregator } from '../util/aggregator';
-import { switchAll } from '../../src/cache/operators';
+import { switchCache } from '../../src/cache/operators';
 
 describe('SwitchFixture', () => {
     let _switchable: Subject<ISourceCache<Person, string>>;
@@ -16,7 +16,7 @@ describe('SwitchFixture', () => {
     beforeEach(() => {
         _source = updateable(new SourceCache<Person, string>(p => p.name));
         _switchable = new BehaviorSubject<ISourceCache<Person, string>>(_source);
-        _results = asAggregator(_switchable.pipe(switchAll()));
+        _results = asAggregator(_switchable.pipe(switchCache()));
     });
 
     afterEach(() => {
@@ -56,7 +56,7 @@ describe('SwitchFixture', () => {
     });
 
     it('Allows for empty', () => {
-        _results = asAggregator(_switchable.pipe(switchAll({ suppressEmptyChangeSets: false })));
+        _results = asAggregator(_switchable.pipe(switchCache({ suppressEmptyChangeSets: false })));
         _source.edit(() => {});
 
         expect(_results.messages.length).toBe(1);

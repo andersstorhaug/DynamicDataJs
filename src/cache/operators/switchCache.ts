@@ -1,17 +1,10 @@
-import { Observable, OperatorFunction, tap, switchAll as _switchAll, map, filter } from 'rxjs';
+import { Observable, OperatorFunction, tap, switchAll, map, filter } from 'rxjs';
 import { IChangeSet } from '../IChangeSet';
+import { ConnectConfig } from '../IConnectableCache';
 import { ISourceCache } from '../ISourceCache';
 import { ObservableCache } from '../ObservableCache';
 
 type CacheOrObservableChangeSet<TObject, TKey> = ISourceCache<TObject, TKey> | Observable<IChangeSet<TObject, TKey>>;
-
-export interface SwitchOptions {
-    /** Use deep equality with the cache */
-    deepEqual?: boolean;
-
-    /** By default, empty change sets are not emitted. Set this value to false to emit empty change sets. */
-    suppressEmptyChangeSets?: boolean;
-}
 
 /**
  * Transforms an observable sequence of observable changes sets into an observable sequence
@@ -21,18 +14,18 @@ export interface SwitchOptions {
  * @category Operator
  * @typeparam TObject The type of the object.
  * @typeparam TKey The type of the destination key.
- * @param options Operation options.
+ * @param connectConfig Configuration used when connecting to a new source.
  */
-export function switchAll<TObject, TKey>(options?: SwitchOptions): OperatorFunction<CacheOrObservableChangeSet<TObject, TKey>, IChangeSet<TObject, TKey>> {
-    return function switchAllOperator(sources: Observable<CacheOrObservableChangeSet<TObject, TKey>>) {
+export function switchCache<TObject, TKey>(connectConfig?: ConnectConfig<TObject>): OperatorFunction<CacheOrObservableChangeSet<TObject, TKey>, IChangeSet<TObject, TKey>> {
+    return function (sources: Observable<CacheOrObservableChangeSet<TObject, TKey>>) {
         return new Observable<IChangeSet<TObject, TKey>>(observer => {
-            const destination = new ObservableCache<TObject, TKey>(options?.deepEqual ?? false);
+            const destination = new ObservableCache<TObject, TKey>();
 
             const populator = sources
                 .pipe(
-                    map(source => (source instanceof Observable ? source : source.connect(options))),
+                    map(source => (source instanceof Observable ? source : source.connect(connectConfig))),
                     tap(_ => destination.updateFromIntermediate(updater => updater.clear())),
-                    _switchAll(),
+                    switchAll(),
                 )
                 .subscribe(changes =>
                     destination.updateFromIntermediate(updater => {
@@ -41,7 +34,7 @@ export function switchAll<TObject, TKey>(options?: SwitchOptions): OperatorFunct
                 );
 
             const subscription = destination
-                .connect(options)
+                .connect(connectConfig)
                 .pipe(
                     filter((changes, index) => {
                         // The initial empty change set from the destination cache should be filtered in any case

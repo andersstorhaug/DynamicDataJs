@@ -10,7 +10,7 @@ import { Change } from './Change';
 import { filter } from './operators/filter';
 import { notEmpty } from './operators/notEmpty';
 import { IObservableCache } from './IObservableCache';
-import { ConnectOptions } from '..';
+import { ConnectConfig } from '..';
 
 export class ObservableCache<TObject, TKey> implements IObservableCache<TObject, TKey> {
     private readonly _changes = new Subject<IChangeSet<TObject, TKey>>();
@@ -149,19 +149,19 @@ export class ObservableCache<TObject, TKey> implements IObservableCache<TObject,
         });
     }
 
-    public connect(options?: ConnectOptions<TObject>): Observable<IChangeSet<TObject, TKey>> {
-        const _options = {
+    public connect(config?: ConnectConfig<TObject>): Observable<IChangeSet<TObject, TKey>> {
+        const _config = {
             suppressEmptyChangeSets: true,
-            ...options,
+            ...config,
         };
 
         return defer<Observable<IChangeSet<TObject, TKey>>>(() => {
-            const initial = of(this.getInitialUpdates(_options.predicate));
+            const initial = of(this.getInitialUpdates(_config.predicate));
             const changes = concat(initial, this._changes.asObservable());
 
-            let result = _options.predicate ? changes.pipe(filter(_options.predicate)) : changes;
+            let result = _config.predicate ? changes.pipe(filter(_config.predicate)) : changes;
 
-            if (_options.suppressEmptyChangeSets) result = result.pipe(notEmpty());
+            if (_config.suppressEmptyChangeSets) result = result.pipe(notEmpty());
 
             return result;
         });
