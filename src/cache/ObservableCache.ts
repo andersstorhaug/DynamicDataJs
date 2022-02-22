@@ -10,6 +10,7 @@ import { Change } from './Change';
 import { filter } from './operators/filter';
 import { notEmpty } from './operators/notEmpty';
 import { IObservableCache } from './IObservableCache';
+import { ConnectOptions } from '..';
 
 export class ObservableCache<TObject, TKey> implements IObservableCache<TObject, TKey> {
     private readonly _changes = new Subject<IChangeSet<TObject, TKey>>();
@@ -116,15 +117,11 @@ export class ObservableCache<TObject, TKey> implements IObservableCache<TObject,
     }
 
     private invokePreview(changes: ChangeSet<TObject, TKey>) {
-        if (changes.size !== 0) {
-            this._changesPreview.next(changes);
-        }
+        this._changesPreview.next(changes);
     }
 
     private invokeNext(changes: ChangeSet<TObject, TKey>) {
-        if (changes.size !== 0) {
-            this._changes.next(changes);
-        }
+        this._changes.next(changes);
 
         if (this._countChanged.isValueCreated) {
             this._countChanged.value!.next(this._readerWriter.size);
@@ -152,17 +149,26 @@ export class ObservableCache<TObject, TKey> implements IObservableCache<TObject,
         });
     }
 
-    public connect(predicate?: (value: TObject) => boolean): Observable<IChangeSet<TObject, TKey>> {
+    public connect(options?: ConnectOptions<TObject>): Observable<IChangeSet<TObject, TKey>> {
+        const _options = {
+            suppressEmptyChangeSets: true,
+            ...options,
+        };
+
         return defer<Observable<IChangeSet<TObject, TKey>>>(() => {
-            const initial = of(this.getInitialUpdates(predicate));
+            const initial = of(this.getInitialUpdates(_options.predicate));
             const changes = concat(initial, this._changes.asObservable());
 
-            return (predicate ? changes.pipe(filter(predicate)) : changes).pipe(notEmpty());
+            let result = _options.predicate ? changes.pipe(filter(_options.predicate)) : changes;
+
+            if (_options.suppressEmptyChangeSets) result = result.pipe(notEmpty());
+
+            return result;
         });
     }
 
     public preview(predicate?: (value: TObject) => boolean): Observable<IChangeSet<TObject, TKey>> {
-        return predicate ? this._changesPreview.pipe(filter(predicate)) : this._changesPreview;
+        return predicate ? this._changesPreview.pipe(filter(predicate), notEmpty()) : this._changesPreview;
     }
 
     /**
