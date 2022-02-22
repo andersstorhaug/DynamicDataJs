@@ -2,7 +2,7 @@ import { Observable } from 'rxjs';
 import { Change } from './Change';
 import { IChangeSet } from './IChangeSet';
 
-export interface ConnectOptions<TObject> {
+export interface ConnectConfig<TObject> {
     /** The result will be filtered using the specified predicate */
     predicate?: (object: TObject) => boolean;
 
@@ -24,9 +24,9 @@ export interface IConnectableCache<TObject, TKey> {
 
     /**
      * Returns a stream of cache changes preceded with the initial state
-     * @param options Options for the returned stream
+     * @param config Options for the returned stream
      */
-    connect(options?: ConnectOptions<TObject>): Observable<IChangeSet<TObject, TKey>>;
+    connect(config?: ConnectConfig<TObject>): Observable<IChangeSet<TObject, TKey>>;
 
     /**
      * Returns a filtered stream of cache changes.

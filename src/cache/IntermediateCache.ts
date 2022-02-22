@@ -3,7 +3,7 @@ import { ObservableCache } from './ObservableCache';
 import { Observable } from 'rxjs';
 import { IChangeSet } from './IChangeSet';
 import { IIntermediateCache } from './IIntermediateCache';
-import { ConnectOptions } from '..';
+import { ConnectConfig } from '..';
 /**
  *  Cache designed to be used for custom operator construction. It requires no key to be specified
  *  but instead relies on the user specifying the key when amending data
@@ -50,8 +50,8 @@ export class IntermediateCache<TObject, TKey> implements IIntermediateCache<TObj
      *
      * @param predicate The predicate.
      */
-    public connect(options?: ConnectOptions<TObject>) {
-        return this._innerCache.connect(options);
+    public connect(config?: ConnectConfig<TObject>) {
+        return this._innerCache.connect(config);
     }
     public preview(predicate?: (value: TObject) => boolean) {
         return this._innerCache.preview(predicate);
