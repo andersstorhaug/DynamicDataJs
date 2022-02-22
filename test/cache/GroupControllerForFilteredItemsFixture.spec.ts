@@ -25,7 +25,7 @@ describe('GroupControllerForFilteredItemsFixture', function () {
     beforeEach(() => {
         _source = updateable(new SourceCache<Person, string>(p => p.name));
         _refresher = new Subject<unknown>();
-        _grouped = asObservableCache(_source.connect(p => _grouper(p) !== AgeBracket.Pensioner).pipe(groupOn(_grouper, _refresher)));
+        _grouped = asObservableCache(_source.connect({ predicate: p => _grouper(p) !== AgeBracket.Pensioner }).pipe(groupOn(_grouper, _refresher)));
     });
 
     afterEach(() => {

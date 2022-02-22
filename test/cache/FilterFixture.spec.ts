@@ -14,7 +14,7 @@ describe('FilterFixture', () => {
 
     beforeEach(() => {
         _source = updateable(new SourceCache<Person, string>(p => p.name));
-        _results = asAggregator(_source.connect(p => p.age > 20));
+        _results = asAggregator(_source.connect({ predicate: p => p.age > 20 }));
     });
 
     afterEach(() => {

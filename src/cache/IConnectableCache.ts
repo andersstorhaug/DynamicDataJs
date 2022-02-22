@@ -2,6 +2,14 @@ import { Observable } from 'rxjs';
 import { Change } from './Change';
 import { IChangeSet } from './IChangeSet';
 
+export interface ConnectOptions<TObject> {
+    /** The result will be filtered using the specified predicate */
+    predicate?: (object: TObject) => boolean;
+
+    /** By default, empty change sets are not emitted. Set this value to false to emit empty change sets. */
+    suppressEmptyChangeSets?: boolean;
+}
+
 /**
  * A cache for observing and querying in memory data
  * @typeparam TObject The type of the object
@@ -15,10 +23,10 @@ export interface IConnectableCache<TObject, TKey> {
     watch(key: TKey): Observable<Change<TObject, TKey>>;
 
     /**
-     *  Returns a filtered stream of cache changes preceded with the initial filtered state
-     * @param predicate The result will be filtered using the specified predicate
+     * Returns a stream of cache changes preceded with the initial state
+     * @param options Options for the returned stream
      */
-    connect(predicate?: (object: TObject) => boolean): Observable<IChangeSet<TObject, TKey>>;
+    connect(options?: ConnectOptions<TObject>): Observable<IChangeSet<TObject, TKey>>;
 
     /**
      * Returns a filtered stream of cache changes.

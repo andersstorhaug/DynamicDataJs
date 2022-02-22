@@ -11,7 +11,7 @@ describe('QueryWhenChangedFixture', () => {
 
     beforeEach(() => {
         _source = updateable(new SourceCache<Person, string>(p => p.name));
-        _results = new ChangeSetAggregator<Person, string>(_source.connect(p => p.age > 20));
+        _results = new ChangeSetAggregator<Person, string>(_source.connect({ predicate: p => p.age > 20 }));
     });
 
     afterEach(() => {
