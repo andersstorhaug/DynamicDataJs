@@ -5,6 +5,7 @@ import { map } from 'rxjs/operators';
 import { notEmpty } from './notEmpty';
 import { ChangeSet } from '../ChangeSet';
 import { Change } from '../Change';
+import { deepEqualMapAdapter } from '../../util/deepEqualMapAdapter';
 
 /**
  * Selects distinct values from the source, using the specified value selector
@@ -14,10 +15,15 @@ import { Change } from '../Change';
  * @param source The source
  * @param valueSelector The transform factory
  */
-export function distinctValues<TObject, TKey, TValue>(valueSelector: (value: TObject) => TValue): OperatorFunction<IChangeSet<TObject, TKey>, DistinctChangeSet<TValue>> {
+export function distinctValues<TObject, TKey, TValue>(
+    valueSelector: (value: TObject) => TValue,
+    deepEqual?: boolean,
+): OperatorFunction<IChangeSet<TObject, TKey>, DistinctChangeSet<TValue>> {
     const _valueCounters = new Map<TValue, number>();
     const _keyCounters = new Map<TKey, number>();
     const _itemCache = new Map<TKey, TValue>();
+
+    const _valueCountersAdapter = deepEqual ? deepEqualMapAdapter(_valueCounters) : _valueCounters;
 
     return function distinctValuesOperator(source) {
         return source.pipe(map(calculate), notEmpty());
@@ -55,30 +61,30 @@ export function distinctValues<TObject, TKey, TValue>(valueSelector: (value: TOb
         const result = new ChangeSet<TValue, TValue>();
 
         function addValueAction(value: TValue) {
-            const count = _valueCounters.get(value);
+            const count = _valueCountersAdapter.get(value);
             if (count !== undefined) {
-                _valueCounters.set(value, count + 1);
+                _valueCountersAdapter.set(value, count + 1);
             } else {
-                _valueCounters.set(value, 1);
+                _valueCountersAdapter.set(value, 1);
                 result.add(Change.add(value, value));
             }
         }
 
         function removeValueAction(value: TValue) {
-            const counter = _valueCounters.get(value);
+            const counter = _valueCountersAdapter.get(value);
             if (counter === undefined) {
                 return;
             }
 
             //decrement counter
             const newCount = counter - 1;
-            _valueCounters.set(value, newCount);
+            _valueCountersAdapter.set(value, newCount);
             if (newCount !== 0) {
                 return;
             }
 
             //if there are none, then remove and notify
-            _valueCounters.delete(value);
+            _valueCountersAdapter.delete(value);
             result.add(Change.remove(value, value));
         }
 
