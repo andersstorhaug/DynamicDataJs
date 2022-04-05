@@ -5,12 +5,10 @@ import { CompositeDisposable } from '../../src/util';
 import { SourceCache, updateable } from '../../src/cache/SourceCache';
 import { range, toArray, from } from 'ix/iterable';
 import { map, orderBy, orderByDescending } from 'ix/iterable/operators';
-import { TestScheduler } from 'rxjs/testing';
-import { observeOn, tap } from 'rxjs/operators';
-import { sort } from '../../src/cache/operators/sort';
+import { tap } from 'rxjs/operators';
+import { sort, SortComparer } from '../../src/cache/operators/sort';
 import { toCollection } from '../../src/cache/operators/toCollection';
 import { toSortedCollection } from '../../src/cache/operators/toSortedCollection';
-import { defaultComparer } from '../../src/cache/Comparer';
 
 describe('ToSortedCollectionFixture', () => {
     let _cache: ISourceCache<Person, number> & ISourceUpdater<Person, number>;
@@ -34,7 +32,6 @@ describe('ToSortedCollectionFixture', () => {
             _cache
                 .connect()
                 .pipe(
-                    // observeOn(testScheduler),
                     sort(),
                     toCollection(),
                     tap(persons => {
@@ -48,8 +45,8 @@ describe('ToSortedCollectionFixture', () => {
             _cache
                 .connect()
                 .pipe(
-                    // observeOn(testScheduler),
-                    toSortedCollection(z => z.age),
+                    sort(SortComparer.ascending<Person>('age')),
+                    toSortedCollection(),
                     tap(persons => {
                         _sortedCollection.splice(0, _sortedCollection.length, ...persons);
                     }),
@@ -70,7 +67,6 @@ describe('ToSortedCollectionFixture', () => {
             _cache
                 .connect()
                 .pipe(
-                    // observeOn(testScheduler),
                     sort(),
                     toCollection(),
                     tap(persons => {
@@ -84,8 +80,8 @@ describe('ToSortedCollectionFixture', () => {
             _cache
                 .connect()
                 .pipe(
-                    // observeOn(testScheduler),
-                    toSortedCollection(z => z.age, 'desc'),
+                    sort(SortComparer.descending<Person>('age')),
+                    toSortedCollection(),
                     tap(persons => {
                         _sortedCollection.splice(0, _sortedCollection.length, ...persons);
                     }),
