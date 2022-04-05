@@ -25,7 +25,7 @@ import { SortedChangeSet } from '../SortedChangeSet';
  */
 export function sort<TObject, TKey>(
     comparer?: Comparer<TObject>,
-    comparerChangedObservable: Observable<Comparer<TObject>> = NEVER,
+    comparerChangedObservable: Observable<Comparer<TObject> | undefined> = NEVER,
     resort: Observable<unknown> = NEVER,
     resetThreshold = -1,
     keyComparer: Comparer<TKey> = defaultComparer,
@@ -58,7 +58,7 @@ export function sort<TObject, TKey>(
             return doSort('dataChanged', changes);
         }
 
-        function sortComparer(comparer: Comparer<TObject>) {
+        function sortComparer(comparer?: Comparer<TObject>) {
             _comparer = keyValueComparer(keyComparer, comparer);
             return doSort('comparerChanged');
         }
