@@ -58,3 +58,4 @@ export * from './operators/whereReasonsAreNot';
 export * from './operators/xor';
 export * from './operators/switchCache';
 export * from './operators/shareCache';
+export * from './operators/page';
