@@ -6,6 +6,7 @@ import { ChangeSet } from './ChangeSet';
 import { isIterable } from '../util/isIterable';
 import { tryGetValue } from '../util/tryGetValue';
 import { deepEqualMapAdapter } from '../util/deepEqualMapAdapter';
+import { defaultMapAdapter } from '../util/defaultMapAdapter';
 
 /**
  *  A cache which captures all changes which are made to it. These changes are recorded until CaptureChanges() at which point thw changes are cleared.
@@ -16,12 +17,7 @@ export class ChangeAwareCache<TObject, TKey> implements ICache<TObject, TKey> {
     private _changes?: ChangeSet<TObject, TKey>;
     private _data: Map<TKey, TObject>;
     private readonly _deepEqual: boolean;
-    private _mapAdapter!: {
-        get: typeof Map.prototype.get;
-        set: typeof Map.prototype.set;
-        has: typeof Map.prototype.has;
-        delete: typeof Map.prototype.delete;
-    };
+    private _mapAdapter!: IMap<TKey, TObject>;
 
     public get size() {
         return this._data?.size ?? 0;
@@ -126,7 +122,7 @@ export class ChangeAwareCache<TObject, TKey> implements ICache<TObject, TKey> {
         }
 
         if (this._mapAdapter == undefined) {
-            this._mapAdapter = this._deepEqual ? deepEqualMapAdapter(this._data) : this._data;
+            this._mapAdapter = this._deepEqual ? deepEqualMapAdapter(this._data) : defaultMapAdapter(this._data);
         }
     }
 

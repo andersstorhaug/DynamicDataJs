@@ -3,16 +3,12 @@ import { IChangeSet } from './IChangeSet';
 import { ArrayOrIterable } from '../util/ArrayOrIterable';
 import { isIterable } from '../util/isIterable';
 import { deepEqualMapAdapter } from '../util/deepEqualMapAdapter';
+import { defaultMapAdapter } from '../util/defaultMapAdapter';
 
 export class Cache<TObject, TKey> implements ICache<TObject, TKey> {
     private readonly _data: Map<TKey, TObject>;
     private readonly _deepEqual: boolean;
-    private readonly _mapAdapter: {
-        get: typeof Map.prototype.get;
-        set: typeof Map.prototype.set;
-        has: typeof Map.prototype.has;
-        delete: typeof Map.prototype.delete;
-    };
+    private readonly _mapAdapter: IMap<TKey, TObject>;
 
     public get size() {
         return this._data.size;
@@ -44,7 +40,7 @@ export class Cache<TObject, TKey> implements ICache<TObject, TKey> {
             this._data = data ?? new Map<TKey, TObject>();
         }
         this._deepEqual = deepEqual;
-        this._mapAdapter = deepEqual ? deepEqualMapAdapter(this._data) : this._data;
+        this._mapAdapter = deepEqual ? deepEqualMapAdapter(this._data) : defaultMapAdapter(this._data);
     }
 
     public clone(): void;

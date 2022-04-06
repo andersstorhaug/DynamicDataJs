@@ -60,3 +60,5 @@ export * from './operators/switchCache';
 export * from './operators/shareCache';
 export * from './operators/page';
 export * from './operators/fullJoin';
+export * from './operators/groupWithImmutableState';
+export * from './operators/innerJoin';

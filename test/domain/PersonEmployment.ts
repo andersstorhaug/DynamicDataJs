@@ -1,4 +1,8 @@
 export class PersonEmpKey {
+    public static create(personEmployment: PersonEmployment) {
+        return new PersonEmpKey(personEmployment.name, personEmployment.company);
+    }
+
     private readonly _name: string;
     private readonly _company: string;
 
@@ -7,8 +11,8 @@ export class PersonEmpKey {
         this._company = company;
     }
 
-    public static create(personEmployment: PersonEmployment) {
-        return new PersonEmpKey(personEmployment.name, personEmployment.company);
+    toString() {
+        return `${this._name},${this._company}`;
     }
 }
 
