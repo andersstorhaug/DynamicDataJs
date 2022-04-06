@@ -10,6 +10,13 @@ import { KeyValueCollection } from '../KeyValueCollection';
 import { PagedChangeSet } from '../PagedChangeSet';
 import { PageResponse } from '../PageResponse';
 
+/**
+ * Returns the page as specified by the pageRequests observable.
+ * @typeparam TObject The type of the object.
+ * @typeparam TKey The type of the key.
+ * @param pageRequests The page requests.
+ * @returns An observable which emits change sets.
+ */
 export function page<TObject, TKey>(pageRequests: Observable<PageRequest>): OperatorFunction<ISortedChangeSet<TObject, TKey>, IPagedChangeSet<TObject, TKey>> {
     return function (source) {
         let _all: IKeyValueCollection<TObject, TKey> = new KeyValueCollection<TObject, TKey>();
