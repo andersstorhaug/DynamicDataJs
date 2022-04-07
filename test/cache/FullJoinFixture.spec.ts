@@ -12,13 +12,13 @@ describe('FullJoinFixture', () => {
 
     beforeEach(() => {
         _left = updateable(new SourceCache<Device, string>(device => device.name));
-        _right = updateable(new SourceCache<DeviceMetadata, string>(device => device.deviceName));
+        _right = updateable(new SourceCache<DeviceMetadata, string>(device => device.name));
 
         _result = asAggregator(
             _left.connect().pipe(
                 fullJoin(
                     _right.connect(),
-                    meta => meta.deviceName,
+                    meta => meta.name,
                     (key, device, meta) => new DeviceWithMetadata(key, device, meta),
                 ),
             ),

@@ -65,3 +65,4 @@ export * from './operators/innerJoin';
 export * from './operators/innerJoinMany';
 export * from './operators/leftJoin';
 export * from './operators/leftJoinMany';
+export * from './operators/rightJoin';

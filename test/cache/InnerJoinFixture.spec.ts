@@ -12,12 +12,12 @@ describe('InnerJoinFixture', () => {
 
     beforeEach(() => {
         _left = updateable(new SourceCache<Device, string>(value => value.name));
-        _right = updateable(new SourceCache<DeviceMetadata, number>(value => value.id));
+        _right = updateable(new SourceCache<DeviceMetadata, number>(value => value.key));
 
         const joined = _left.connect().pipe(
             innerJoin(
                 _right.connect(),
-                meta => meta.deviceName,
+                meta => meta.name,
                 (key, device, meta) => new DeviceWithMetadata(key.left, device, meta),
             ),
             changeKey((_value, key) => key.toString()),

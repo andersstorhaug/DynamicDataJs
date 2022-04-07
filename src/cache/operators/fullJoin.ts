@@ -16,7 +16,7 @@ import { changeKey } from './changeKey';
 export function fullJoin<TLeft, TLeftKey, TRight, TRightKey, TDestination>(
     right: Observable<IChangeSet<TRight, TRightKey>>,
     rightKeySelector: (value: TRight) => TLeftKey,
-    resultSelector: (leftKey: TLeftKey, left?: TLeft, right?: TRight) => TDestination,
+    resultSelector: (leftKey: TLeftKey, left: TLeft | undefined, right: TRight | undefined) => TDestination,
 ): OperatorFunction<IChangeSet<TLeft, TLeftKey>, IChangeSet<TDestination, TLeftKey>> {
     return left => {
         // create local backing stores

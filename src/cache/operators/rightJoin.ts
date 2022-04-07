@@ -3,43 +3,47 @@ import { Observable } from 'rxjs';
 import { ChangeAwareCache } from '../ChangeAwareCache';
 import { IChangeSet } from '../IChangeSet';
 import { asObservableCache } from './asObservableCache';
-import { changeKey } from './changeKey';
+import { groupWithImmutableState } from './groupWithImmutableState';
 
 /**
- * Joins the left and right observable data sources, taking all left values and combining any matching right values.
+ * Joins the left and right observable data sources, taking all right values and combining any matching left values.
  * @category Operator
  * @param right The right data source.
  * @param rightKeySelector Specify the foreign key on the right data source.
  * @param resultSelector The result selector used to transform the combined data into.
  * @returns An observable which will emit change sets.
  */
-export function leftJoin<TLeft, TLeftKey, TRight, TRightKey, TDestination>(
+export function rightJoin<TLeft, TLeftKey, TRight, TRightKey, TDestination>(
     right: Observable<IChangeSet<TRight, TRightKey>>,
     rightKeySelector: (value: TRight) => TLeftKey,
-    resultSelector: (key: TLeftKey, left: TLeft, right: TRight | undefined) => TDestination,
-): OperatorFunction<IChangeSet<TLeft, TLeftKey>, IChangeSet<TDestination, TLeftKey>> {
+    resultSelector: (key: TRightKey, left: TLeft | undefined, right: TRight) => TDestination,
+): OperatorFunction<IChangeSet<TLeft, TLeftKey>, IChangeSet<TDestination, TRightKey>> {
     return left => {
         // create local backing stores
         const leftCache = asObservableCache(left);
-        const rightCache = asObservableCache(right.pipe(changeKey(rightKeySelector)));
+        const rightCache = asObservableCache(right);
+        const rightGroupedCache = asObservableCache(right.pipe(groupWithImmutableState(rightKeySelector)));
 
         // joined is the final cache
-        const joinedCache = new ChangeAwareCache<TDestination, TLeftKey>();
+        const joinedCache = new ChangeAwareCache<TDestination, TRightKey>();
 
-        const leftLoader = leftCache.connect().pipe(
+        const rightLoader = rightCache.connect().pipe(
             map(changes => {
-                for (let change of changes) {
+                for (const change of changes) {
+                    const leftKey = rightKeySelector(change.current);
+
                     switch (change.reason) {
                         case 'add':
                         case 'update':
-                            // Update with left (and right if it is presents)
-                            const leftItem = change.current;
-                            const rightItem = rightCache.lookup(change.key);
+                            // Update with right (and left if it is presents)
+                            const rightItem = change.current;
+                            const leftItem = leftCache.lookup(leftKey);
+
                             joinedCache.addOrUpdate(resultSelector(change.key, leftItem, rightItem), change.key);
                             break;
 
                         case 'remove':
-                            // remove from result because a left value is expected
+                            // remove from result because a right value is expected
                             joinedCache.removeKey(change.key);
                             break;
 
@@ -54,37 +58,32 @@ export function leftJoin<TLeft, TLeftKey, TRight, TRightKey, TDestination>(
             }),
         );
 
-        const rightLoader = rightCache.connect().pipe(
+        const leftLoader = leftCache.connect().pipe(
             map(changes => {
-                for (const change of changes) {
-                    const rightItem = change.current;
-                    const leftItem = leftCache.lookup(change.key);
+                for (let change of changes) {
+                    const leftItem = change.current;
+                    const rightGroup = rightGroupedCache.lookup(change.key);
+
+                    if (rightGroup === undefined) continue;
 
                     switch (change.reason) {
                         case 'add':
                         case 'update':
-                            if (leftItem !== undefined) {
-                                // Update with left and right value
-                                joinedCache.addOrUpdate(resultSelector(change.key, leftItem, rightItem), change.key);
-                            } else {
-                                // remove if it is already in the cache
-                                joinedCache.removeKey(change.key);
+                            for (let [rightKey, rightItem] of rightGroup.entries()) {
+                                joinedCache.addOrUpdate(resultSelector(rightKey, leftItem, rightItem), rightKey);
                             }
                             break;
 
                         case 'remove':
-                            if (leftItem !== undefined) {
-                                // update with no right value
-                                joinedCache.addOrUpdate(resultSelector(change.key, leftItem, undefined), change.key);
-                            } else {
-                                // remove from result because there is no left and no rights
-                                joinedCache.removeKey(change.key);
+                            for (let [rightKey, rightItem] of rightGroup.entries()) {
+                                joinedCache.addOrUpdate(resultSelector(rightKey, undefined, rightItem), rightKey);
                             }
                             break;
 
                         case 'refresh':
-                            // propagate upstream
-                            joinedCache.refreshKey(change.key);
+                            for (let [rightKey, _rightItem] of rightGroup.entries()) {
+                                joinedCache.refreshKey(rightKey);
+                            }
                             break;
                     }
                 }
@@ -93,7 +92,7 @@ export function leftJoin<TLeft, TLeftKey, TRight, TRightKey, TDestination>(
             }),
         );
 
-        return new Observable<IChangeSet<TDestination, TLeftKey>>(subscriber => {
+        return new Observable(subscriber => {
             const loader = merge(leftLoader, rightLoader).subscribe(subscriber);
 
             return () => {
