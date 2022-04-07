@@ -1,6 +1,6 @@
 {
     "name": "@astorhaug/dynamicdatajs",
-    "version": "0.7.3",
+    "version": "0.7.4",
     "description": "",
     "author": "David Driscoll",
     "module": "esm/index.js",
@@ -8,6 +8,11 @@
     "typings": "index.d.ts",
     "files": [
         "esm",
+        "binding",
+        "cache",
+        "diagnostics",
+        "notify",
+        "util",
         "src",
         "*.js*",
         "*.d.ts"
