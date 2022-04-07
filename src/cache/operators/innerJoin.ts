@@ -30,7 +30,7 @@ export function innerJoin<TLeft, TLeftKey, TRight, TRightKey, TDestination>(
             const rightGrouped = asObservableCache(rightShared.pipe(groupWithImmutableState(rightKeySelector)));
 
             // joined is the final cache
-            const joinedCache = new ChangeAwareCache<TDestination, JoinKey<TLeftKey, TRightKey>>(true);
+            const joinedCache = new ChangeAwareCache<TDestination, JoinKey<TLeftKey, TRightKey>>();
 
             const leftLoader = leftCache.connect().pipe(
                 map(changes => {
