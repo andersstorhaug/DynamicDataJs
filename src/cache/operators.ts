@@ -62,3 +62,4 @@ export * from './operators/page';
 export * from './operators/fullJoin';
 export * from './operators/groupWithImmutableState';
 export * from './operators/innerJoin';
+export * from './operators/innerJoinMany';
