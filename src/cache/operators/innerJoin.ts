@@ -1,4 +1,4 @@
-import { map, merge, OperatorFunction } from 'rxjs';
+import { connectable, map, merge, OperatorFunction } from 'rxjs';
 import { Observable } from 'rxjs';
 import { ChangeAwareCache } from '../ChangeAwareCache';
 import { IChangeSet } from '../IChangeSet';
@@ -24,8 +24,10 @@ export function innerJoin<TLeft, TLeftKey, TRight, TRightKey, TDestination>(
         return new Observable(subscriber => {
             // create local backing stores
             const leftCache = asObservableCache(left);
-            const rightCache = asObservableCache(right);
-            const rightGrouped = asObservableCache(right.pipe(groupWithImmutableState(rightKeySelector)));
+
+            const rightShared = connectable(right);
+            const rightCache = asObservableCache(rightShared);
+            const rightGrouped = asObservableCache(rightShared.pipe(groupWithImmutableState(rightKeySelector)));
 
             // joined is the final cache
             const joinedCache = new ChangeAwareCache<TDestination, JoinKey<TLeftKey, TRightKey>>(true);
@@ -108,10 +110,12 @@ export function innerJoin<TLeft, TLeftKey, TRight, TRightKey, TDestination>(
                 }),
             );
 
+            const rightSubscription = rightShared.connect();
             const loader = merge(leftLoader, rightLoader).subscribe(subscriber);
 
             return () => {
                 loader.unsubscribe();
+                rightSubscription.unsubscribe();
                 leftCache.dispose();
                 rightCache.dispose();
             };
