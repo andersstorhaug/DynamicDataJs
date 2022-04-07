@@ -1,22 +1,17 @@
-import { combineLatest, Observable, OperatorFunction } from 'rxjs';
+import { Observable, OperatorFunction } from 'rxjs';
 import { DistinctChangeSet } from '../DistinctChangeSet';
 import { IChangeSet } from '../IChangeSet';
 import { Group, GroupChangeSet, ManagedGroup } from '../IGroupChangeSet';
-import { map, mergeAll, startWith, switchMap, tap } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 import { disposeMany } from './disposeMany';
 import { asObservableCache } from './asObservableCache';
 import { subscribeMany } from './subscribeMany';
 import { transform } from './transform';
-import { from as ixFrom, toSet } from 'ix/iterable';
-import { map as ixMap, filter as ixFilter, tap as ixTap } from 'ix/iterable/operators';
+import { from as ixFrom } from 'ix/iterable';
+import { map as ixMap } from 'ix/iterable/operators';
 import { Change } from '../Change';
-import { CompositeDisposable, Disposable } from '../../util';
+import { Disposable } from '../../util';
 import { groupOn } from './groupOn';
-import { filter } from './filter';
-import { toCollection } from './toCollection';
-import { bind } from './bind';
-import { clone } from './clone';
-import { ChangeSet } from '../ChangeSet';
 
 /**
  *   Groups the source on the value returned by group selector factory.

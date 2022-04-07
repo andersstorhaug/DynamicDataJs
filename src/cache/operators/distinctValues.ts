@@ -6,6 +6,7 @@ import { notEmpty } from './notEmpty';
 import { ChangeSet } from '../ChangeSet';
 import { Change } from '../Change';
 import { deepEqualMapAdapter } from '../../util/deepEqualMapAdapter';
+import { defaultMapAdapter } from '../../util/defaultMapAdapter';
 
 /**
  * Selects distinct values from the source, using the specified value selector
@@ -23,7 +24,7 @@ export function distinctValues<TObject, TKey, TValue>(
     const _keyCounters = new Map<TKey, number>();
     const _itemCache = new Map<TKey, TValue>();
 
-    const _valueCountersAdapter = deepEqual ? deepEqualMapAdapter(_valueCounters) : _valueCounters;
+    const _valueCountersAdapter = deepEqual ? deepEqualMapAdapter(_valueCounters) : defaultMapAdapter(_valueCounters);
 
     return function distinctValuesOperator(source) {
         return source.pipe(map(calculate), notEmpty());
