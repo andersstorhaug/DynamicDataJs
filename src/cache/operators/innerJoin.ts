@@ -4,7 +4,7 @@ import { ChangeAwareCache } from '../ChangeAwareCache';
 import { IChangeSet } from '../IChangeSet';
 import { JoinKey } from '../JoinKey';
 import { asObservableCache } from './asObservableCache';
-import { groupWithImmutableState } from './groupWithImmutableState';
+import { groupOn } from './groupOn';
 
 /**
  * Joins the left and right observable data sources, taking values when both left and right values are present.
@@ -27,7 +27,7 @@ export function innerJoin<TLeft, TLeftKey, TRight, TRightKey, TDestination>(
 
             const rightShared = connectable(right);
             const rightCache = asObservableCache(rightShared);
-            const rightGrouped = asObservableCache(rightShared.pipe(groupWithImmutableState(rightKeySelector)));
+            const rightGrouped = asObservableCache(rightShared.pipe(groupOn(rightKeySelector)));
 
             // joined is the final cache
             const joinedCache = new ChangeAwareCache<TDestination, JoinKey<TLeftKey, TRightKey>>(true);
@@ -42,20 +42,20 @@ export function innerJoin<TLeft, TLeftKey, TRight, TRightKey, TDestination>(
                             switch (change.reason) {
                                 case 'add':
                                 case 'update':
-                                    for (let keyValue of rightGroup.entries()) {
+                                    for (let keyValue of rightGroup.cache.entries()) {
                                         const key = new JoinKey(change.key, keyValue[0]);
                                         joinedCache.addOrUpdate(resultSelector(key, leftItem, keyValue[1]), key);
                                     }
                                     break;
 
                                 case 'remove':
-                                    for (let keyValue of rightGroup.entries()) {
+                                    for (let keyValue of rightGroup.cache.entries()) {
                                         joinedCache.removeKey(new JoinKey(change.key, keyValue[0]));
                                     }
                                     break;
 
                                 case 'refresh':
-                                    for (let rightKey of rightGroup.keys()) {
+                                    for (let rightKey of rightGroup.cache.keys()) {
                                         joinedCache.refreshKey(new JoinKey(change.key, rightKey));
                                     }
                                     break;
