@@ -1,11 +1,11 @@
-import { fullJoin, ISourceCache, ISourceUpdater, SourceCache, updateable } from '../../src';
-import { every, some, count } from 'ix/iterable';
-import { asAggregator, ChangeSetAggregator } from '../util/aggregator';
+import { count, every } from 'ix/iterable';
+import { ISourceCache, ISourceUpdater, leftJoin, SourceCache, updateable } from '../../src';
 import { Device } from '../domain/Device';
-import { DeviceWithMetadata } from '../domain/DeviceWithMetadata';
 import { DeviceMetadata } from '../domain/DeviceMetadata';
+import { DeviceWithMetadata } from '../domain/DeviceWithMetadata';
+import { asAggregator, ChangeSetAggregator } from '../util/aggregator';
 
-describe('FullJoinFixture', () => {
+describe('LeftJoinFixture', () => {
     let _left: ISourceCache<Device, string> & ISourceUpdater<Device, string>;
     let _right: ISourceCache<DeviceMetadata, string> & ISourceUpdater<DeviceMetadata, string>;
     let _result: ChangeSetAggregator<DeviceWithMetadata, string>;
@@ -16,7 +16,7 @@ describe('FullJoinFixture', () => {
 
         _result = asAggregator(
             _left.connect().pipe(
-                fullJoin(
+                leftJoin(
                     _right.connect(),
                     meta => meta.deviceName,
                     (key, device, meta) => new DeviceWithMetadata(key, device, meta),
@@ -40,20 +40,6 @@ describe('FullJoinFixture', () => {
         expect(_result.data.lookup('Device3')).toBeDefined();
 
         expect(every(_result.data.values(), { predicate: value => !!value.metadata })).toBe(false);
-
-        expect(every(_result.data.values(), { predicate: value => !!value.device })).toBe(true);
-    });
-
-    it('AddRightOnly', () => {
-        _right.addOrUpdateValues([new DeviceMetadata(1, 'Device1'), new DeviceMetadata(2, 'Device2'), new DeviceMetadata(3, 'Device3')]);
-
-        expect(_result.data.size).toBe(3);
-        expect(_result.data.lookup('Device1')).toBeDefined();
-        expect(_result.data.lookup('Device2')).toBeDefined();
-        expect(_result.data.lookup('Device3')).toBeDefined();
-
-        expect(every(_result.data.values(), { predicate: value => !!value.metadata })).toBe(true);
-        expect(every(_result.data.values(), { predicate: value => !!value.device })).toBe(false);
     });
 
     it('AddLeftThenRight', () => {
@@ -61,6 +47,15 @@ describe('FullJoinFixture', () => {
         _right.addOrUpdateValues([new DeviceMetadata(1, 'Device1'), new DeviceMetadata(2, 'Device2'), new DeviceMetadata(3, 'Device3')]);
 
         expect(3).toBe(_result.data.size);
+        expect(every(_result.data.values(), { predicate: value => !!value.metadata })).toBe(true);
+    });
+
+    it('AddRightThenLeft', () => {
+        _right.addOrUpdateValues([new DeviceMetadata(1, 'Device1'), new DeviceMetadata(2, 'Device2'), new DeviceMetadata(3, 'Device3')]);
+        _left.addOrUpdateValues([new Device('Device1'), new Device('Device2'), new Device('Device3')]);
+
+        expect(_result.data.size).toBe(3);
+
         expect(every(_result.data.values(), { predicate: value => !!value.metadata })).toBe(true);
     });
 
@@ -79,18 +74,7 @@ describe('FullJoinFixture', () => {
 
         _left.removeKey('Device1');
 
-        expect(_result.data.lookup('Device1')).toBeDefined();
-        expect(_result.data.lookup('Device2')).toBeDefined();
-        expect(_result.data.lookup('Device3')).toBeDefined();
-    });
-
-    it('AddRightThenLeft', () => {
-        _right.addOrUpdateValues([new DeviceMetadata(1, 'Device1'), new DeviceMetadata(2, 'Device2'), new DeviceMetadata(3, 'Device3')]);
-        _left.addOrUpdateValues([new Device('Device1'), new Device('Device2'), new Device('Device3')]);
-
-        expect(_result.data.size).toBe(3);
-
-        expect(every(_result.data.values(), { predicate: value => !!value.metadata })).toBe(true);
+        expect(_result.data.lookup('Device1')).toBeUndefined();
     });
 
     it('UpdateRight', () => {

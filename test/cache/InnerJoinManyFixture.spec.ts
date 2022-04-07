@@ -1,4 +1,4 @@
-import { toArray, range, IterableX, isEmpty, from } from 'ix/iterable';
+import { toArray, range, isEmpty, from } from 'ix/iterable';
 import { filter, groupBy, map } from 'ix/iterable/operators';
 import { innerJoinMany, ISourceCache, ISourceUpdater, SourceCache, updateable } from '../../src';
 import { Person } from '../domain/Person';
@@ -19,7 +19,7 @@ describe('InnerJoinManyFixture', () => {
                 innerJoinMany(
                     _people.connect(),
                     pac => pac.parentName,
-                    (parent, grouping) => new ParentAndChildren(parent, toArray(grouping.values())),
+                    (_key, parent, grouping) => new ParentAndChildren(parent, toArray(grouping.values())),
                 ),
             ),
         );

@@ -1,22 +1,22 @@
-import { OperatorFunction, Observable, map, merge } from 'rxjs';
+import { map, merge, OperatorFunction } from 'rxjs';
+import { Observable } from 'rxjs';
 import { ChangeAwareCache } from '../ChangeAwareCache';
 import { IChangeSet } from '../IChangeSet';
 import { asObservableCache } from './asObservableCache';
 import { changeKey } from './changeKey';
 
 /**
- * Groups the right data source and joins the resulting group to the left data source, matching these using the specified key selector. Results are included when the left or the right has a value.
- * This is the equivalent of SQL full join.
+ * Joins the left and right observable data sources, taking all left values and combining any matching right values.
  * @category Operator
  * @param right The right data source.
  * @param rightKeySelector Specify the foreign key on the right data source.
  * @param resultSelector The result selector used to transform the combined data into.
  * @returns An observable which will emit change sets.
  */
-export function fullJoin<TLeft, TLeftKey, TRight, TRightKey, TDestination>(
+export function leftJoin<TLeft, TLeftKey, TRight, TRightKey, TDestination>(
     right: Observable<IChangeSet<TRight, TRightKey>>,
     rightKeySelector: (value: TRight) => TLeftKey,
-    resultSelector: (leftKey: TLeftKey, left?: TLeft, right?: TRight) => TDestination,
+    resultSelector: (key: TLeftKey, left: TLeft, right?: TRight) => TDestination,
 ): OperatorFunction<IChangeSet<TLeft, TLeftKey>, IChangeSet<TDestination, TLeftKey>> {
     return left => {
         // create local backing stores
@@ -29,23 +29,18 @@ export function fullJoin<TLeft, TLeftKey, TRight, TRightKey, TDestination>(
         const leftLoader = leftCache.connect().pipe(
             map(changes => {
                 for (let change of changes) {
-                    const leftItem = change.current;
-                    const rightItem = rightCache.lookup(change.key);
-
                     switch (change.reason) {
                         case 'add':
                         case 'update':
+                            // Update with left (and right if it is presents)
+                            const leftItem = change.current;
+                            const rightItem = rightCache.lookup(change.key);
                             joinedCache.addOrUpdate(resultSelector(change.key, leftItem, rightItem), change.key);
                             break;
 
                         case 'remove':
-                            if (rightItem === undefined) {
-                                // remove from result because there is no left and no rights
-                                joinedCache.removeKey(change.key);
-                            } else {
-                                // update with no left value
-                                joinedCache.addOrUpdate(resultSelector(change.key, undefined, rightItem), change.key);
-                            }
+                            // remove from result because a left value is expected
+                            joinedCache.removeKey(change.key);
                             break;
 
                         case 'refresh':
@@ -68,16 +63,22 @@ export function fullJoin<TLeft, TLeftKey, TRight, TRightKey, TDestination>(
                     switch (change.reason) {
                         case 'add':
                         case 'update':
-                            joinedCache.addOrUpdate(resultSelector(change.key, leftItem, rightItem), change.key);
+                            if (leftItem !== undefined) {
+                                // Update with left and right value
+                                joinedCache.addOrUpdate(resultSelector(change.key, leftItem, rightItem), change.key);
+                            } else {
+                                // remove if it is already in the cache
+                                joinedCache.removeKey(change.key);
+                            }
                             break;
 
                         case 'remove':
-                            if (leftItem === undefined) {
-                                // remove from result because there is no left and no rights
-                                joinedCache.removeKey(change.key);
-                            } else {
+                            if (leftItem !== undefined) {
                                 // update with no right value
                                 joinedCache.addOrUpdate(resultSelector(change.key, leftItem, undefined), change.key);
+                            } else {
+                                // remove from result because there is no left and no rights
+                                joinedCache.removeKey(change.key);
                             }
                             break;
 

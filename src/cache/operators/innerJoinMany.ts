@@ -18,7 +18,7 @@ import { innerJoin } from './innerJoin';
 export function innerJoinMany<TLeft, TLeftKey, TRight, TRightKey, TDestination>(
     right: Observable<IChangeSet<TRight, TRightKey>>,
     rightKeySelector: (value: TRight) => TLeftKey,
-    resultSelector: (left: TLeft, right: IGrouping<TRight, TRightKey, TLeftKey>) => TDestination,
+    resultSelector: (key: TLeftKey, left: TLeft, right: IGrouping<TRight, TRightKey, TLeftKey>) => TDestination,
 ): OperatorFunction<IChangeSet<TLeft, TLeftKey>, IChangeSet<TDestination, TLeftKey>> {
     return left => {
         const rightGrouped = right.pipe(groupWithImmutableState(rightKeySelector));
@@ -27,7 +27,7 @@ export function innerJoinMany<TLeft, TLeftKey, TRight, TRightKey, TDestination>(
             innerJoin(
                 rightGrouped,
                 group => group.key,
-                (_key, leftItem, rightGroup) => resultSelector(leftItem, rightGroup),
+                (key, leftItem, rightGroup) => resultSelector(key.left, leftItem, rightGroup),
             ),
             changeKey((_value, key) => key.left),
         );
