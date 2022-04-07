@@ -1,14 +1,13 @@
-import { toArray, range, isEmpty, from } from 'ix/iterable';
-import { filter, groupBy, map } from 'ix/iterable/operators';
-import { innerJoinMany, ISourceCache, ISourceUpdater, SourceCache, updateable } from '../../src';
-import { Person } from '../domain/Person';
+import { from, range, toArray } from 'ix/iterable';
+import { groupBy, map, orderBy } from 'ix/iterable/operators';
+import { ISourceCache, ISourceUpdater, leftJoinMany, SourceCache, updateable } from '../../src';
 import { ParentAndChildren } from '../domain/ParentAndChildren';
+import { Person } from '../domain/Person';
 import { asAggregator, ChangeSetAggregator } from '../util/aggregator';
 
-describe('InnerJoinManyFixture', () => {
+describe('LeftJoinManyFixture', () => {
     let _people: ISourceCache<Person, string> & ISourceUpdater<Person, string>;
 
-    // Only parent which have children will be included
     let _result: ChangeSetAggregator<ParentAndChildren, string>;
 
     beforeEach(() => {
@@ -16,7 +15,7 @@ describe('InnerJoinManyFixture', () => {
 
         _result = asAggregator(
             _people.connect().pipe(
-                innerJoinMany(
+                leftJoinMany(
                     _people.connect(),
                     pac => pac.parentName,
                     (_key, person, grouping) => new ParentAndChildren(person, toArray(grouping.values())),
@@ -47,7 +46,12 @@ describe('InnerJoinManyFixture', () => {
 
         _people.addOrUpdateValues(people);
 
-        expect(_result.data.size).toBe(0);
+        expect(_result.data.size).toBe(10);
+        expect(toArray(from(_result.data.values()).pipe(map(pac => pac.parent)))).toEqual(people);
+
+        for (let pac of _result.data.values()) {
+            expect(pac.count).toBe(0);
+        }
     });
 
     it('AddPeopleWithParents', () => {
@@ -102,15 +106,18 @@ describe('InnerJoinManyFixture', () => {
         assertDataIsCorrectlyFormed(updatedPeople);
     });
 
-    function assertDataIsCorrectlyFormed(allPeople: Person[], ...missingParents: string[]) {
-        const grouped = toArray(
-            from(allPeople).pipe(
-                groupBy(p => p.parentName),
-                filter(p => !isEmpty(p) && !missingParents.includes(p.key)),
+    function assertDataIsCorrectlyFormed(expected: Person[], ...missingParents: string[]) {
+        const actual = toArray(
+            from(_result.data.values()).pipe(
+                map(pac => pac.parent),
+                orderBy(p => p?.name),
             ),
         );
 
-        expect(_result.data.size).toBe(grouped.length);
+        expect(actual.length).toBe(expected.length);
+        expect(new Set(actual)).toEqual(new Set(expected));
+
+        const grouped = toArray(from(expected).pipe(groupBy(p => p.parentName)));
 
         for (let grouping of grouped) {
             if (missingParents.length > 0 && missingParents.includes(grouping.key)) continue;
@@ -118,7 +125,7 @@ describe('InnerJoinManyFixture', () => {
             const result = _result.data.lookup(grouping.key);
 
             expect(result).toBeDefined();
-            expect(result!.children).toEqual(toArray(grouping));
+            expect(new Set(result!.children)).toEqual(new Set(grouping));
         }
     }
 
