@@ -24,7 +24,6 @@ export function innerJoin<TLeft, TLeftKey, TRight, TRightKey, TDestination>(
         return new Observable(subscriber => {
             // create local backing stores
             const leftCache = asObservableCache(left);
-
             const rightShared = connectable(right);
             const rightCache = asObservableCache(rightShared);
             const rightGrouped = asObservableCache(rightShared.pipe(groupWithImmutableState(rightKeySelector)));
