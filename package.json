@@ -1,6 +1,6 @@
 {
     "name": "@astorhaug/dynamicdatajs",
-    "version": "0.7.11",
+    "version": "0.7.12",
     "description": "",
     "author": "David Driscoll",
     "module": "esm/index.js",
