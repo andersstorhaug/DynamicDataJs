@@ -18,6 +18,7 @@ import { ChangeSet } from '../ChangeSet';
 export function filterDynamic<TObject, TKey>(
     predicateChanged: Observable<(value: TObject) => boolean>,
     reapplyFilter?: Observable<unknown>,
+    suppressEmptyChangeSets?: boolean,
 ): MonoTypeChangeSetOperatorFunction<TObject, TKey>;
 /**
  * Creates a filtered stream which can be dynamically filtered
@@ -27,7 +28,11 @@ export function filterDynamic<TObject, TKey>(
  * @param predicateChanged Observable to change the underlying predicate.
  * @param reapplyFilter Observable to re-evaluate whether the filter still matches items. Use when filtering on mutable values
  */
-export function filterDynamic<TObject, TKey>(predicateChanged: Observable<unknown>, reapplyFilter?: Observable<unknown>): MonoTypeChangeSetOperatorFunction<TObject, TKey>;
+export function filterDynamic<TObject, TKey>(
+    predicateChanged: Observable<unknown>,
+    reapplyFilter?: Observable<unknown>,
+    suppressEmptyChangeSets?: boolean,
+): MonoTypeChangeSetOperatorFunction<TObject, TKey>;
 /**
  * Creates a filtered stream which can be dynamically filtered
  * @category Operator
