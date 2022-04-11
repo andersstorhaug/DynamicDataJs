@@ -39,7 +39,10 @@ export function filterDynamic<TObject, TKey>(predicateChanged: Observable<unknow
 export function filterDynamic<TObject, TKey>(
     predicateChanged: Observable<unknown | ((value: TObject, key: TKey) => boolean)>,
     reapplyFilter?: Observable<unknown>,
+    suppressEmptyChangeSets?: boolean,
 ): MonoTypeChangeSetOperatorFunction<TObject, TKey> {
+    suppressEmptyChangeSets ??= true;
+
     return function filterOperator(source) {
         return new Observable<IChangeSet<TObject, TKey>>(observer => {
             const allData = new Cache<TObject, TKey>();
@@ -69,7 +72,11 @@ export function filterDynamic<TObject, TKey>(
                 }),
             );
 
-            return merge(refresher, dataChanged).pipe(notEmpty()).subscribe(observer);
+            let result = merge(refresher, dataChanged);
+
+            if (suppressEmptyChangeSets) result = result.pipe(notEmpty());
+
+            return result.subscribe(observer);
         });
 
         function latestPredicateObservable(): Observable<(value: TObject, key: TKey) => boolean> {
