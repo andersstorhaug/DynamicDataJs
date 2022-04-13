@@ -24,9 +24,11 @@ export class IntermediateCache<TObject, TKey> implements IIntermediateCache<TObj
     public getKey(item: TObject): TKey {
         return this._innerCache.getKey(item);
     }
-    [Symbol.toStringTag] = 'ObservableCache' as const;
+
+    readonly [Symbol.toStringTag] = 'ObservableCache' as const;
+
     [Symbol.iterator](): IterableIterator<[TKey, TObject]> {
-        throw new Error('Method not implemented.');
+        return this._innerCache[Symbol.iterator]();
     }
     /**
      *  Action to apply a batch update to a cache. Multiple update methods can be invoked within a single batch operation.

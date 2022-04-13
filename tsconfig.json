@@ -2,13 +2,8 @@
     "compilerOptions": {
         "incremental": true,
         "target": "ES6",
-        "module": "ES2020",
-        "lib": [
-            "ESNext",
-            "DOM"
-        ],
+        "lib": ["ES2015", "DOM"],
         "rootDir": "./src",
-        "outDir": "./esm",
         "declaration": true,
         "strict": true,
         "sourceMap": true,
@@ -22,15 +17,5 @@
         "mode": "file",
         "out": "docs"
     },
-    "exclude": [
-        "./dist",
-        "./test",
-        "./binding/**/*.d.ts",
-        "./diagnostics/**/*.d.ts",
-        "./cache/**/*.d.ts",
-        "./notify/**/*.d.ts",
-        "./util/**/*.d.ts",
-        "./esm/**/*.d.ts",
-        "./*.d.ts"
-    ]
+    "exclude": ["./test", "./dist/**/*.d.ts", "./*.d.ts"]
 }
